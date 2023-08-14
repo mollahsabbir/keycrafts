@@ -1,0 +1,59 @@
+#!/bin/bash
+
+function work() {
+    local workspace_dir=~/workspace
+    local numbered_folders=()
+    local i=1
+
+    if [[ "$1" == "--help" ]]; then
+        echo "Usage:"
+        echo "  work : Navigate to $workspace_dir"
+        echo "  work <folder> : Navigate to $workspace_dir/<folder>, creating if not exists"
+        echo "  work --list or work -l : List all available folders in $workspace_dir"
+        echo "  work --now or work -n : Create a random folder in $workspace_dir and move there"
+        return
+    fi
+
+    if [[ "$1" == "--list" || "$1" == "-l" ]]; then
+        echo "Available folders in $workspace_dir:"
+        for folder in "$workspace_dir"/*/; do
+            folder_name=$(basename "$folder")
+            numbered_folders+=("$folder_name")
+            echo "[$i] $folder_name"
+            ((i++))
+        done
+
+        read -p "Enter the number of the folder to navigate into (or press Enter to exit): " choice
+        if [[ "$choice" =~ ^[0-9]+$ && "$choice" -ge 1 && "$choice" -le "${#numbered_folders[@]}" ]]; then
+            target_folder="${numbered_folders[$((choice - 1))]}"
+            cd "$workspace_dir/$target_folder" || return 1
+        elif [ -z "$choice" ]; then
+            echo "Exiting."
+            return
+        else
+            echo "Invalid choice. Exiting."
+            return
+        fi
+        return
+    fi
+
+    if [[ "$1" == "--now" || "$1" == "-n" ]]; then
+        local random_folder="random_folder_$(date +%Y%m%d%H%M%S)"
+        mkdir -p "$workspace_dir/$random_folder"
+        cd "$workspace_dir/$random_folder" || return 1
+        echo "Created and moved to $random_folder."
+        return
+    fi
+
+    if [[ -n "$1" ]]; then
+        local target_dir="$workspace_dir/$1"
+    else
+        local target_dir="$workspace_dir"
+    fi
+
+    if [[ ! -d "$target_dir" ]]; then
+        mkdir -p "$target_dir"
+    fi
+
+    cd "$target_dir" || return 1
+}
