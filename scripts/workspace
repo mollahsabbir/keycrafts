@@ -10,7 +10,8 @@ function work() {
         echo "  work : Navigate to $workspace_dir"
         echo "  work <folder> : Navigate to $workspace_dir/<folder>, creating if not exists"
         echo "  work --list or work -l : List all available folders in $workspace_dir"
-        echo "  work --now or work -n : Create a random folder in $workspace_dir and move there"
+        echo "  work --now or work -n : Create a random project in $workspace_dir and move there"
+        echo "  work --clear or work -c : Move all random projects to a .trash folder"
         return
     fi
 
@@ -38,10 +39,24 @@ function work() {
     fi
 
     if [[ "$1" == "--now" || "$1" == "-n" ]]; then
-        local random_folder="random_folder_$(date +%Y%m%d%H%M%S)"
-        mkdir -p "$workspace_dir/$random_folder"
-        cd "$workspace_dir/$random_folder" || return 1
-        echo "Created and moved to $random_folder."
+        local random_project="random_project_$(date +%Y%m%d%H%M%S)"
+        mkdir -p "$workspace_dir/$random_project"
+        cd "$workspace_dir/$random_project" || return 1
+        echo "Created and moved to $random_project."
+        return
+    fi
+
+    if [[ "$1" == "--clear" || "$1" == "-c" ]]; then
+        local trash_folder="$workspace_dir/.trash"
+        mkdir -p "$trash_folder"
+        shopt -s nullglob
+        for folder in "$workspace_dir"/random_project_*; do
+            if [[ -d "$folder" ]]; then
+                mv "$folder" "$trash_folder"
+                echo "Moved $folder to $trash_folder"
+            fi
+        done
+        shopt -u nullglob
         return
     fi
 
